@@ -1,3 +1,4 @@
+# Deployment do MongoDB
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -87,8 +88,10 @@ spec:
   ports:
     - port: 80
       targetPort: 80
+      nodePort: 30001
       name: http
     - port: 443
       targetPort: 443
+      nodePort: 30002
       name: https
   type: NodePort
