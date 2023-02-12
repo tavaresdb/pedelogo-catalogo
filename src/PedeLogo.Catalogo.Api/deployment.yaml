@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:4.4.6
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: mongouser
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: mongopwd
+
+---
+
+# Service do MongoDB
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - port: 27017
+  type: ClusterIP
+
+---
+
+# Deployment da api PedeLogo Catalogo
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: tavaresdb/pedelogo-catalogo:v1
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: Mongo__Host
+              value: mongodb
+            - name: Mongo__Port
+              value: "27017"
+            - name: Mongo__User
+              value: mongouser
+            - name: Mongo__Password
+              value: mongopwd
+            - name: Mongo__DataBase
+              value: admin
+
+---
+
+# Service da api PedeLogo Catalogo
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+    - port: 443
+      targetPort: 443
+      name: https
+  type: NodePort
